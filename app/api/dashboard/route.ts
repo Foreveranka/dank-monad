@@ -1,4 +1,4 @@
-import {createPublicClient,http,parseAbi,formatUnits,type Address} from 'viem';
+import {createPublicClient,http,parseAbi,formatUnits,decodeEventLog,type Address} from 'viem';
 import {monadTestnet} from 'viem/chains';
 import config from '@/lib/deployment.json';
 import abi from '@/lib/protocol-abi.json';
@@ -23,10 +23,19 @@ export async function GET(request:Request){
    const state=l[9]?'loss':l[8]?(l[5]>0n?'repaid':'cancelled'):l[10]?'default':overdue?'overdue':l[5]>0n?'active':block.timestamp>l[4]+604800n?'expired':'pending';
    return{id:Number(id),borrower:member[0],score:Number(member[1]),principal:usd(l[1]),outstanding:usd(l[2]),repaidPrincipal:usd(l[5]>0n?BigInt(l[1])-BigInt(l[2]):0n),payoff:usd(quote),months:Number(l[3]),createdAt:Number(l[4]),activatedAt:Number(l[5]),coverage:usd(l[6]),status:state,guarantors,schedule:schedule.map((s:any)=>({due:Number(s.due),principal:usd(s.principal),interest:usd(s.interest),penalty:usd(s.penalty),paid:s.principal+s.interest+s.penalty===0n}))};
   }));
+  const fixture=scenarios as {protocol:string|null;wallets:any[]};const fixtures=fixture.protocol?.toLowerCase()===config.protocol.toLowerCase()?fixture.wallets:[];
   // Bounded recent event window; lifetime repaid principal is read from contract state above.
   const requestedEnd=paymentBefore?BigInt(paymentBefore):blockNumber;const end=requestedEnd<blockNumber?requestedEnd:blockNumber;const first=BigInt(config.deploymentBlock);const from=end>first+999n?end-999n:first;let payments:any[]=[];let paymentError=false;
-  try{const logs=[];for(let start=from;start<=end;start+=100n){const stop=start+99n<end?start+99n:end;logs.push(...await client.getLogs({address:config.protocol as Address,event:parseAbi(['event Payment(uint256 indexed loanId,address indexed payer,uint256 amount,uint256 principalPaid)'])[0],fromBlock:start,toBlock:stop}));if(stop<end)await new Promise(resolve=>setTimeout(resolve,150))}payments=logs.reverse().map(l=>({loanId:Number(l.args.loanId),payer:l.args.payer,amount:usd(l.args.amount!),principal:usd(l.args.principalPaid!),hash:l.transactionHash,block:Number(l.blockNumber)}))}catch{paymentError=true}
-  const fixture=scenarios as {protocol:string|null;wallets:any[]};const fixtures=fixture.protocol?.toLowerCase()===config.protocol.toLowerCase()?fixture.wallets:[];
+  try{const logs=[];for(let start=from;start<=end;start+=100n){const stop=start+99n<end?start+99n:end;logs.push(...await client.getLogs({address:config.protocol as Address,event:parseAbi(['event Payment(uint256 indexed loanId,address indexed payer,uint256 amount,uint256 principalPaid)'])[0],fromBlock:start,toBlock:stop}));if(stop<end)await new Promise(resolve=>setTimeout(resolve,150))}payments=logs.reverse().map(l=>({loanId:Number(l.args.loanId),payer:l.args.payer,amount:usd(l.args.amount!),principal:usd(l.args.principalPaid!),hash:l.transactionHash,block:Number(l.blockNumber)}))
+   // Keep completed test repayments discoverable, verifying each receipt onchain.
+   if(!paymentBefore){for(const f of fixtures.filter(f=>f.repaymentHash)){
+    if(payments.some(p=>p.hash===f.repaymentHash))continue;
+    const receipt=await client.getTransactionReceipt({hash:f.repaymentHash});
+    if(receipt.status!=='success'||receipt.to?.toLowerCase()!==config.protocol.toLowerCase())continue;
+    for(const log of receipt.logs){if(log.address.toLowerCase()!==config.protocol.toLowerCase())continue;try{const decoded=decodeEventLog({abi:parseAbi(['event Payment(uint256 indexed loanId,address indexed payer,uint256 amount,uint256 principalPaid)']),data:log.data,topics:log.topics});payments.push({loanId:Number(decoded.args.loanId),payer:decoded.args.payer,amount:usd(decoded.args.amount),principal:usd(decoded.args.principalPaid),hash:receipt.transactionHash,block:Number(receipt.blockNumber)})}catch{}}
+   }payments.sort((a,b)=>b.block-a.block)}
+  }catch{paymentError=true}
+
   return Response.json({chainId:10143,protocol:config.protocol,token:config.token,block:Number(blockNumber),blockTime:Number(block.timestamp),observedAt:Date.now(),page,pages,total,pool:usd(pool),assets:usd(assets),providers,outstanding:usd(outstanding),phase:Number(phase),loans,payments,paymentError,paymentFromBlock:Number(from),paymentToBlock:Number(end),hasEarlierPayments:from>first,fixtures},{headers:{'Cache-Control':'public, s-maxage=15, stale-while-revalidate=15'}});
  }catch(e){console.error('Dashboard source error',e instanceof Error?e.message.slice(0,1000):'Unknown');return Response.json({error:'CHAIN_UNAVAILABLE'},{status:503,headers:{'Cache-Control':'no-store'}})}
 }
