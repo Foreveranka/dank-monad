@@ -366,6 +366,28 @@
       ],
       "status": "registered",
       "synthetic": true
+    },
+    {
+      "address": "0x9C43267b44F420ad1bC7AF51293a1CC3dDb382B3",
+      "score": 100,
+      "memberId": "0x3244483e3976b282610d43f1d90521810fb90e08f1a3dce4cfa0ebd4d3653114",
+      "transactions": [
+        {
+          "action": "enroll",
+          "hash": "0x4cbf36bd1a18e223b7168d453a46c754bc9120a053d2febc8b2b22d58ca4eba2"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x23a3d2f0a8ced592bf9c9771bec017ceff3afbed72e69e749600f2d1393f5b83"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x9d030c0f6ccbe9e43cc7a7def9ddeabe2698f3a9c6b52b1b6b6b8e975fcd6712"
+        }
+      ],
+      "status": "registered",
+      "synthetic": true,
+      "demo": true
     }
   ]
 }
