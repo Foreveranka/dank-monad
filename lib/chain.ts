@@ -1,7 +1,7 @@
 import {createPublicClient,createWalletClient,custom,http,parseAbi,parseUnits,formatUnits,type Address,type Abi,type EIP1193Provider} from 'viem';
 import {monadTestnet} from 'viem/chains';
 import deployment from './deployment.json';
-const config: {chainId:number;rpc:string;explorer:string;protocol:Address|null;token:Address|null;admin:string;tokenSymbol:string;deployed:boolean}=deployment;
+const config: {chainId:number;rpc:string;explorer:string;protocol:Address|null;token:Address|null;admin:string;tokenSymbol:string;deployed:boolean}={...deployment,protocol:deployment.protocol as Address|null,token:deployment.token as Address|null};
 import abi from './protocol-abi.json';
 export {config,abi};
 export const publicClient=createPublicClient({chain:monadTestnet,transport:http(config.rpc,{timeout:15000})});

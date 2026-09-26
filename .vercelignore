@@ -1,0 +1,10 @@
+.git
+.agents
+.wrangler
+.sites-runtime
+.vinext
+dist
+contracts/out
+contracts/cache
+contracts/broadcast
+.env*

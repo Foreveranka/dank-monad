@@ -1,0 +1,48 @@
+{
+  "chainId": 10143,
+  "token": "0x21f8f91324cb5a123101abc2faf36d2a294d6089",
+  "protocol": "0x99dd8f006e1c0e979dfef212c06c81b148217e1c",
+  "funder": "0x5683d9AC05d4A89624a42Fc313E33f94E56d0A1A",
+  "deposited": "50000",
+  "poolBalance": "50000",
+  "phase": 1,
+  "verifiedAt": "2026-09-26T10:47:44.629Z",
+  "transactions": [
+    {
+      "action": "register",
+      "hash": "0x71f64f4b090338088292fef1561ad9df40c7e8364a1e57da3057548dd767a3a5"
+    },
+    {
+      "action": "faucet",
+      "hash": "0x1f5536f04b05979438fd2e8c4d4f3ade0d9139b259c59052d2c8a098338d8705"
+    },
+    {
+      "action": "faucet",
+      "hash": "0xe7dbf5a2afbf0924ffb4b36c37358ba9379d1965183b1913f4e528f11658e22e"
+    },
+    {
+      "action": "faucet",
+      "hash": "0xc1622ebe62e6a64cf6c88eadd024cdd073f17853443b954b6ac5de304aa44cb4"
+    },
+    {
+      "action": "faucet",
+      "hash": "0xc880e028d1e017e278620c22128991f8a57770c5251cdcb232fa11def16cfb42"
+    },
+    {
+      "action": "faucet",
+      "hash": "0x683df004924ae2692b4845f964193f58dd49279a3af7f337d621c8a283817385"
+    },
+    {
+      "action": "approve",
+      "hash": "0xde3727fed2a795e664b3b830c4567000b9174a9eba1adde4cb2aaa923ed1f290"
+    },
+    {
+      "action": "depositCapital",
+      "hash": "0x747491b77660a35e761190ef2011e5e44de01371f5fdc70da6c911e2429c90cd"
+    },
+    {
+      "action": "startLending",
+      "hash": "0x8c05bca5580af4e76d7f2d0b78120fc73285066fbbe283c11d208b7639b0c351"
+    }
+  ]
+}

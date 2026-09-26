@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {generatePrivateKey,privateKeyToAccount} from 'viem/accounts';
-const base='http://localhost:5175';
+const base=process.env.DANK_TEST_URL||'http://localhost:5180';
 for(const route of ['/','/app','/docs']){const r=await fetch(base+route);assert.equal(r.status,200);console.log(route,'OK')}
-for(const [country,lang] of [['TR','tr'],['US','en'],['DE','de'],['ES','es'],['FR','fr']]){const r=await fetch(base+'/api/locale',{headers:{'cf-ipcountry':country}});const body=await r.json();assert.equal(body.language,lang);console.log(country,lang)}
+for(const [country,lang] of [['TR','tr'],['US','en'],['DE','de'],['ES','es'],['FR','fr']]){const r=await fetch(base+'/api/locale',{headers:{'x-vercel-ip-country':country}});const body=await r.json();assert.equal(body.language,lang);console.log(country,lang)}
 const account=privateKeyToAccount(generatePrivateKey());
 const request={wallet:account.address,action:'read',data:{}};
 const c=await fetch(base+'/api/challenge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const challenge=await c.json();assert.equal(c.status,200,JSON.stringify(challenge));

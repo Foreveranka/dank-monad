@@ -1,5 +1,5 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "dank-monad",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -11,11 +11,15 @@
     "build": "vinext build",
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "build:vercel": "next build --webpack",
+    "dev:vercel": "next dev --port 5180",
+    "start:vercel": "next start --port 5180"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@neondatabase/serverless": "^1.1.0",
     "@openzeppelin/contracts": "^5.6.1",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",

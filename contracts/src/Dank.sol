@@ -55,6 +55,14 @@ contract Dank is Ownable2Step, ReentrancyGuard {
  event CapitalClaimed(address indexed provider,uint256 amount);
  event PhaseChanged(Phase phase);
  constructor(address asset,address admin) Ownable(admin){require(block.chainid==10143||block.chainid==31337,'Testnet only');require(asset.code.length>0,'Token missing');token=IERC20(asset);}
+ /// @notice Public testnet onboarding. The starter allowance is not an earned reputation score.
+ function register() external returns(bytes32 id){
+  require(!paused&&memberOf[msg.sender]==0,'Already registered or paused');
+  id=keccak256(abi.encode("DANK-test-member",msg.sender));
+  require(members[id].wallet==address(0),'Identity used');
+  members[id]=Member(msg.sender,0,80e6,80e6,0,0,0,true);memberOf[msg.sender]=id;
+  emit MemberEnrolled(id,msg.sender);
+ }
  function enroll(bytes32 id,address wallet) external onlyOwner {require(id!=0&&wallet!=address(0),'Bad identity');require(members[id].wallet==address(0)&&memberOf[wallet]==0,'Exists');members[id]=Member(wallet,0,0,0,0,0,0,true);memberOf[wallet]=id;emit MemberEnrolled(id,wallet);}
  /// @notice rank 0 = participation, 1/2/3 = placement. Participation counts once. The first verified podium result locks this component.
  function verifyAchievement(bytes32 id,bytes32 evidenceId,uint8 rank) external onlyOwner {

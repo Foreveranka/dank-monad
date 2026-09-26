@@ -1,1 +1,10 @@
-{"chainId":10143,"rpc":"https://testnet-rpc.monad.xyz","explorer":"https://testnet.monadscan.com","protocol":null,"token":null,"admin":"0x5683d9AC05d4A89624a42Fc313E33f94E56d0A1A","tokenSymbol":"dUSD","deployed":false}
+{
+  "chainId": 10143,
+  "rpc": "https://testnet-rpc.monad.xyz",
+  "explorer": "https://testnet.monadscan.com",
+  "protocol": "0x99dd8f006e1c0e979dfef212c06c81b148217e1c",
+  "token": "0x21f8f91324cb5a123101abc2faf36d2a294d6089",
+  "admin": "0x5683d9AC05d4A89624a42Fc313E33f94E56d0A1A",
+  "tokenSymbol": "USD",
+  "deployed": true
+}
