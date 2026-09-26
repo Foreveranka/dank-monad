@@ -291,6 +291,81 @@
       "rejectionHash": "0x8061a025de117f8b0d984388eb5d7c11e1bdff1930f4c0f958f8867b842c0e76",
       "status": "rejected",
       "reason": "SCORE_BELOW_80"
+    },
+    {
+      "address": "0xB2bBF802D83bc750954699a646D68eF124A04691",
+      "score": 85,
+      "memberId": "0x8a84a26b1d286c9b7dfd23697bd8a88fbe64ab9da11ff20c6eb9c137586b7f7e",
+      "transactions": [
+        {
+          "action": "enroll",
+          "hash": "0xc0cfca08465b15f65df0ae4edb75b19946b3feaa7c2ae6452d3f406c420f531f"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x73fee2b7d82a71e2ac2ed5e1d1fb660cbfa518858bff4ebc2b7d03252a2423b5"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x1b7ca0698eb634a4cd4a806ba99706f0f77a44398323d9ff47655dcbdaabee81"
+        },
+        {
+          "action": "testGas",
+          "hash": "0x4e737d5aba48055885c18345be13dfc811fae703dfd0ed3c78b91853ae49d7ae"
+        }
+      ],
+      "status": "registered",
+      "synthetic": true
+    },
+    {
+      "address": "0x65F00BfE97c98b050275A076327A8C34A9bE7CFd",
+      "score": 95,
+      "memberId": "0x0340d8747fd4b0797bc93b00f88e9a66904a8b7e89e44c0eb94dc61940347066",
+      "transactions": [
+        {
+          "action": "enroll",
+          "hash": "0x7dd3ce6692229131e5b5e6af532f5b36aa2da3de06e25e1b26cb04c0b012a115"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x0c5089dd53a697682c8439b242616824b6663302e399849fb31369e54a84c39c"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0xa892b25ca907f1aba96a2d877e3eca1719a0896728bfc651128901fd4cabd7c9"
+        },
+        {
+          "action": "testGas",
+          "hash": "0x20b0aae727a42e42641bc86bc15149f22d7665efe153edce2f753affcdf5b137"
+        }
+      ],
+      "status": "registered",
+      "synthetic": true
+    },
+    {
+      "address": "0x6Fe35Bc669f568bECC5d9a975ed08199A4d85208",
+      "score": 100,
+      "memberId": "0x8526e32ce67fe28c20488c7e200d14565846abed050cbb339b21fb044d2b8fa6",
+      "transactions": [
+        {
+          "action": "enroll",
+          "hash": "0x40fac4c6b48a7855a67876115c48cc3771ad96914aacc1bb74c2bfbb561aab20"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x2ac47d5de97a475f7fb4c82d55174650c811072db5e1d4e71a6e9e248892f5b5"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0xd8ae954457d3062c29c9c0b409884fe1e05d37a2a92d77e24f436ada8c4aa194"
+        },
+        {
+          "action": "testGas",
+          "hash": "0xa24a48b9736f387effcb8d733c21891dee7f44316d3b7ce773c60bb95967553a"
+        }
+      ],
+      "status": "registered",
+      "synthetic": true
     }
   ]
 }
