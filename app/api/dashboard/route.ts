@@ -28,7 +28,7 @@ export async function GET(request:Request){
   const requestedEnd=paymentBefore?BigInt(paymentBefore):blockNumber;const end=requestedEnd<blockNumber?requestedEnd:blockNumber;const first=BigInt(config.deploymentBlock);const from=end>first+999n?end-999n:first;let payments:any[]=[];let paymentError=false;
   try{const logs=[];for(let start=from;start<=end;start+=100n){const stop=start+99n<end?start+99n:end;logs.push(...await client.getLogs({address:config.protocol as Address,event:parseAbi(['event Payment(uint256 indexed loanId,address indexed payer,uint256 amount,uint256 principalPaid)'])[0],fromBlock:start,toBlock:stop}));if(stop<end)await new Promise(resolve=>setTimeout(resolve,150))}payments=logs.reverse().map(l=>({loanId:Number(l.args.loanId),payer:l.args.payer,amount:usd(l.args.amount!),principal:usd(l.args.principalPaid!),hash:l.transactionHash,block:Number(l.blockNumber)}))
    // Keep completed test repayments discoverable, verifying each receipt onchain.
-   if(!paymentBefore){for(const f of fixtures.filter(f=>f.repaymentHash)){
+   {for(const f of fixtures.filter(f=>f.repaymentHash)){
     if(payments.some(p=>p.hash===f.repaymentHash))continue;
     const receipt=await client.getTransactionReceipt({hash:f.repaymentHash});
     if(receipt.status!=='success'||receipt.to?.toLowerCase()!==config.protocol.toLowerCase())continue;
