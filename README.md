@@ -1,45 +1,57 @@
-# DANK — Monad Blitz Istanbul
+# DANK — reputation-based credit on Monad
 
-Public-testnet unsecured credit prototype. Mainnet invitation gating is only a future plan. Landing `/`, application `/app`, policy `/docs`. Five languages (TR, EN, DE, ES, FR), country/browser fallback and remembered manual selection.
+DANK is a **testnet-only unsecured credit prototype**, with score-based guarantor support and a public lending dashboard. Hackathon achievements are optional evidence, not the product's purpose or an entry requirement.
 
-## Current status
+- Website: https://dank-monad.vercel.app
+- Application: https://dank-monad.vercel.app/app
+- Public dashboard: https://dank-monad.vercel.app/dashboard
+- Documentation: https://dank-monad.vercel.app/docs
+- Network: Monad Testnet, chain ID **10143**
+- Contract and token addresses: `lib/deployment.json`
 
-Testnet-only Solidity contracts (Monad 10143, local 31337). Custom freely mintable USD is **not Circle USDC** and has no financial value. Deployment addresses are in `lib/deployment.json`; `deployed: false` means transactions cannot yet run on Monad. The UI simulation is explicitly separate from real wallet state.
+**USD is a freely mintable test token, not Circle USDC, not real dollars. This is not mainnet lending and has not had an independent security audit.**
 
-## Scoring policy v2
+## Implemented
 
-Participation: one point once. The first verified podium replaces participation: first 20, second 10, third 5. **The first podium locks the category**, even if a later result is better. Subsequent wins produce zero additional points. Hackathon score <=20 on the contract, not just in the UI. Identity IDs preserve this across wallet migration. A reviewer verifies membership and ownership of public Blitz evidence. The public project list alone is not proof of identity. Placement comes from the source API, never applicant input.
+- Public registration; a valid score of at least 80 is required to borrow or guarantee. New accounts start with zero reputation.
+- Total support capacity: 80–89 points → 80 USD; 90–94 → 200 USD; 95–100 → 500 USD. Assigned account limits can reduce this further. Existing commitments consume this total. The contract enforces automatic support allocation and prevents multiplying capacity across loans.
+- Amortizing 1–12 month loans at 15% regular annual interest; early payoff, default and loss recognition; capacity released on repayment or cancellation.
+- Open liquidity deposits during lending. Providers receive proportionate shares priced against available cash plus outstanding principal net of recognized losses. Uncollected interest is excluded. Collected income increases pool assets. Later deposits buy at the updated value.
+- Explicit risk acceptance is a signed onchain transaction bound to the contract's risk-policy hash. Deposits without acceptance revert. Withdrawals open only after administrator settlement; all outstanding principal must first be repaid or recognized as loss.
+- Public dashboard with loan states, remaining principal, schedules, guarantors, provider shares and paginated payment events. RPC reads are batched and fixed to a block. Payment windows cover 1,000 blocks in batches of 100, with navigation to older blocks.
+- Five languages (Turkish, English, German, Spanish, French), country/browser preference fallback and manual choice; light/dark themes; a separate landing page.
 
-Wallet/DeFi proposed pilot allocation: history 10, eligible 90-day USD volume 10, median 90-day net assets 10, swap activity 10, lending amount-duration 10, seasoned repayments 20, LP/staking amount-duration 10. Total wallet score <=80, combined <=100. These are **uncalibrated pilot weights**, not a validated credit-risk model. Rules and boundary tests live in `lib/scoring.ts`.
+## Verified test scenario
 
-The live wallet endpoint reads Monad mainnet chain 143 native balance and sender nonce at a fixed block. **No DeFi history feed is connected yet**. All seven historical metrics remain unknown; missing data cannot be scored as complete or approve credit. Nonce is not a count of successful transactions or unique people. A production ingestion adapter must identify allowlisted contracts, decode economic actions, deduplicate transaction/log events, exclude self-transfers and round trips, net borrowed assets out of balances, use time-weighted/median balances, enforce seasoned loan thresholds, and attach verifiable source blocks and prices. The policy engine is not that adapter.
+`lib/test-scenarios.json` contains **public addresses and transaction hashes only**. Six synthetic profiles were assigned scores 80, 85, 90, 95, 100 and 79 by the test administrator. Five wallets received loans of 20, 30, 40, 50 and 60 USD. Two loans were repaid; three retain 150 USD total principal. The 79-point wallet's loan transaction reverted onchain. It separately accepted liquidity risks and deposited 10,000 test USD into the initially 50,000 USD pool, receiving exactly 1/6 of its shares.
 
-`updateWalletScore` is a trusted pilot administrator attestation, <=80 points with a unique evidence hash and <=7-day expiry. Refreshes replace, never accumulate. No automatic UI approval is offered for incomplete feeds. Expiry blocks new borrowing/guaranteeing and activation; repayment remains possible. It never clears default strikes. Admin honesty is a trust assumption. The testnet operator is the public `admin` address in deployment.json; its private key is outside this repository.
+These scores are **synthetic test fixtures**, not earned reputation or proven real-world creditworthiness. Old test deployments are recorded in `lib/deployments-history.json`.
 
-## Lending
+## Scoring scope and limitations
 
-15% nominal annual rate, 1–12 calendar-month installments, 10–1000 USD contract bounds with separately assigned personal limits. Three-day overdue gate. Default after 30 days blocks borrower and direct guarantors. Guarantors do not assume repayment liability or authorize withdrawals. At most eight backing loans/guarantors bound loops. Early repayment waives future interest. Overdue interest compounds at 20%/365 and lifetime penalties cap at original principal. Loss recognition after 90 days leaves recovery debt intact. No automatic forgiveness, group exposure analysis or Sybil-proof identity is implemented.
+Pilot policy: wallet/DeFi history up to 80 points, optional hackathon evidence up to 20. Participation earns one point once; the first verified podium replaces it (first 20, second 10, third 5) and locks that category. Later wins add nothing. The weights are not a calibrated credit-risk model.
 
-Funding is a closed cohort: deposits precede lending, owner settles only when outstanding principal is zero or recognized as loss. Original contributors receive subsequent recoveries proportionally. No immediate liquidity guarantee. Admin can pause new activity, approve members/limits and recognize losses but cannot directly drain funds through an admin withdrawal method. This prototype has not received an independent security audit.
+The wallet endpoint currently reads native balance and nonce from Monad mainnet (143). The historical DeFi feed is **not connected**. Missing metrics cannot approve real credit. Owner attestations expire; synthetic test scores are separately labeled and expire after at most 30 days. Mainnet risk controls, Sybil resistance, data-provider integration and independent audits remain future work.
 
-## Data and authentication
+## Run locally
 
-Neon Postgres on Vercel stores invite applications, evidence and short-lived one-use wallet challenges. Signature binds domain, action and payload hash. User-submitted evidence cannot change points by itself. The previous Sites publication retains its separate D1 storage; this Vercel deployment uses the newly provisioned Postgres database. No private keys or KYC documents in the DB. This is an EOA-signature prototype; smart-contract wallet signature support is not implemented.
+Requires Node >=22.13 and Foundry for Solidity tests.
 
-## Local checks
+```sh
+npm ci
+npm run dev:vercel
+# http://localhost:5180
+npm run build:vercel
+node --experimental-strip-types --test tests/scoring.test.ts tests/support.test.mjs
+forge test --root contracts
+```
 
-- `npm install`
-- `npm run dev` (default 5173; current session uses 5175)
-- `npx tsc --noEmit`
-- `node --experimental-strip-types --test tests/scoring.test.ts`
-- `forge test --root contracts` (Foundry needed)
-- `npm run build`
+Optional proof-management APIs need a private `DATABASE_URL` for Neon Postgres. Apply the migration with `node --env-file=.env.local scripts/migrate-postgres.mjs`. The public dashboard reads the chain without a database or wallet login. Never commit environment files, deployment keys or generated wallet files.
 
-Use `node --env-file=.env.local scripts/migrate-postgres.mjs` for database migrations, `npm run build:vercel` to build and `vercel --prod` to publish. WalletScore RPC source: https://docs.monad.xyz/developer-essentials/network-information
-History provider reference: https://docs.monad.xyz/tooling-and-infra/indexers/common-data
+Contract tests cover score boundaries, automatic total support, multiple commitments, synthetic-score permissions, risk consent, proportional LP shares, cash vs. receivables, losses, repayments, wallet migration and 256 amortization fuzz cases. This test suite is not an independent audit.
 
-## Launch gates
+## Administration
 
-The dedicated testnet deployer was funded through the documented DevNads agent faucet. USD and Dank are deployed; `lib/deployment.json` and `lib/pool-bootstrap.json` record the addresses and 50,000 USD pool funding. Connect/validate the DeFi indexer and protocol adapters before awarding wallet credit scores. Complete independent security/risk and applicable compliance review before any real-money launch. No mainnet lending or hackathon submission is performed by this repository.
+The owner can attest scores, assign test scores, set account limits, disable members, pause new activity, recognize sufficiently overdue losses and settle a completed lending cohort. Risk acceptance explicitly discloses these powers. Reputation guarantees are not cash collateral and do not ensure repayment.
 
-Public test onboarding: `register()` creates an 80 USD test limit and 80 USD guarantee capacity with zero reputation points. Registration needs only the caller wallet and test gas. Starter allocations must never be presented as verified achievements. The deployed prototype remains a closed lending cohort: the 50,000 USD pool is now in Lending phase, so new capital deposits are closed for this cohort.
+Project image and logo: `public/brand/`. Hackathon submission is performed by the project owner, not by repository scripts.

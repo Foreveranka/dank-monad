@@ -5,7 +5,8 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import './Calendar.sol';
-/// @notice Invite-only, closed-cohort TESTNET credit prototype. Not production lending software.
+import '@openzeppelin/contracts/utils/math/Math.sol';
+/// @notice Public TESTNET credit and share-accounted liquidity prototype. Not production lending software.
 contract Dank is Ownable2Step, ReentrancyGuard {
  using SafeERC20 for IERC20;
  IERC20 public immutable token;
@@ -40,6 +41,18 @@ contract Dank is Ownable2Step, ReentrancyGuard {
  uint256 public nextLoanId=1;
  uint256 public outstandingPrincipal;
  uint256 public totalDeposits;
+ uint256 public totalShares;
+ address[] public liquidityProviders;
+ function providerCount() external view returns(uint256){return liquidityProviders.length;}
+ mapping(address=>uint256) public shares;
+ bytes32 public constant RISK_POLICY=keccak256("DANK Testnet LP Risk v1: Test USD has no real value. Principal can be lost if loans are not repaid. Returns are not guaranteed. Deposits buy a variable share of pool assets; later deposits dilute ownership. Withdrawals are available only after the lending cohort settles, which requires all outstanding principal to be repaid or recognized as loss. Admin controls scoring, limits, pausing, loss recognition and settlement. No independent audit.");
+ mapping(address=>bytes32) public acceptedRisk;
+ event RiskAccepted(address indexed provider,bytes32 indexed policy);
+ event SharesMinted(address indexed provider,uint256 assets,uint256 shares);
+ function acceptRisk(bytes32 policy) external {require(policy==RISK_POLICY,'Wrong risk policy');acceptedRisk[msg.sender]=policy;emit RiskAccepted(msg.sender,policy);}
+ function poolAssets() public view returns(uint256){return token.balanceOf(address(this))+outstandingPrincipal;}
+ function previewDeposit(uint256 amount) public view returns(uint256){return Math.mulDiv(amount,totalShares+1e6,poolAssets()+1);}
+
  mapping(address=>uint256) public deposits;
  mapping(address=>uint256) public claimed;
  uint256 public cumulativeDistributable;
@@ -67,7 +80,7 @@ contract Dank is Ownable2Step, ReentrancyGuard {
  /// @notice rank 0 = participation, 1/2/3 = placement. Participation counts once. The first verified podium result locks this component.
  function verifyAchievement(bytes32 id,bytes32 evidenceId,uint8 rank) external onlyOwner {
   require(members[id].wallet!=address(0)&&!usedEvidence[evidenceId]&&evidenceId!=0&&rank<=3,'Invalid evidence');
-  usedEvidence[evidenceId]=true;
+  require(testProfileExpires[id]==0,'Synthetic profile');usedEvidence[evidenceId]=true;
   uint256 best=rank==1?20:rank==2?10:rank==3?5:1;
   uint256 previous=hackathonScore[id];uint256 added;
   if(!hackathonWinClaimed[id]){if(rank>0)hackathonWinClaimed[id]=true;if(best>previous){added=best-previous;hackathonScore[id]=best;members[id].score+=added;}}
@@ -80,9 +93,20 @@ contract Dank is Ownable2Step, ReentrancyGuard {
   Member storage m=members[id];require(m.wallet!=address(0)&&points<=80&&assessmentHash!=0&&!usedWalletAssessment[assessmentHash],'Invalid assessment');
   require(expires>block.timestamp&&expires<=block.timestamp+7 days,'Invalid expiry');
   usedWalletAssessment[assessmentHash]=true;walletScore[id]=points;walletScoreExpires[id]=expires;
-  m.score=hackathonScore[id]+points;emit WalletScoreUpdated(id,assessmentHash,points,expires);
+  delete testProfileExpires[id];m.score=hackathonScore[id]+points;emit WalletScoreUpdated(id,assessmentHash,points,expires);
  }
- function scoreFresh(bytes32 id) public view returns(bool){return walletScore[id]==0||walletScoreExpires[id]>=block.timestamp;}
+ mapping(bytes32=>uint256) public testProfileExpires;
+ event TestProfileAssigned(bytes32 indexed memberId,uint256 points,uint256 expires);
+ /// @notice Explicit synthetic reputation for test scenarios, never earned evidence.
+ function assignTestScore(bytes32 id,uint256 points,uint256 expires) external onlyOwner {
+  require(members[id].wallet!=address(0)&&points<=100,'Invalid test profile');
+  require(expires>block.timestamp&&expires<=block.timestamp+30 days,'Invalid expiry');
+  members[id].score=points;testProfileExpires[id]=expires;emit TestProfileAssigned(id,points,expires);
+ }
+ function scoreFresh(bytes32 id) public view returns(bool){if(testProfileExpires[id]>0)return testProfileExpires[id]>=block.timestamp;return walletScore[id]==0||walletScoreExpires[id]>=block.timestamp;}
+ function scoreCapacity(uint256 score) public pure returns(uint256){return score>=95?500e6:score>=90?200e6:score>=80?80e6:0;}
+ function availableSupport(bytes32 id) public view returns(uint256){Member storage m=members[id];uint256 cap=scoreCapacity(m.score);if(m.capacity<cap)cap=m.capacity;return cap>m.usedCapacity?cap-m.usedCapacity:0;}
+
  function setLimits(bytes32 id,uint256 limit,uint256 capacity) external onlyOwner {Member storage m=members[id];require(m.wallet!=address(0)&&limit<=MAX_LOAN&&capacity<=MAX_LOAN&&capacity>=m.usedCapacity,'Bad limits');require(m.score>0||limit==0,'Evidence required');m.creditLimit=limit;m.capacity=capacity;}
  function setEnabled(bytes32 id,bool enabled) external onlyOwner {require(members[id].wallet!=address(0),'Unknown member');members[id].enabled=enabled;}
  function setPaused(bool value) external onlyOwner {paused=value;}
@@ -91,12 +115,12 @@ contract Dank is Ownable2Step, ReentrancyGuard {
  function proposeWallet(address newWallet) external {bytes32 id=memberOf[msg.sender];require(id!=0&&newWallet!=address(0)&&memberOf[newWallet]==0,'Invalid wallet');pendingWallet[id]=newWallet;}
  function acceptWallet(bytes32 id) external {require(pendingWallet[id]==msg.sender&&memberOf[msg.sender]==0,'Not proposed');delete memberOf[members[id].wallet];members[id].wallet=msg.sender;memberOf[msg.sender]=id;delete pendingWallet[id];}
  function isOverdue(uint256 loanId) public view returns(bool){Loan storage l=loans[loanId];if(l.activatedAt==0||l.closed)return false;Installment[] storage s=schedules[loanId];for(uint256 i;i<s.length;i++)if(s[i].principal+s[i].interest+s[i].penalty>0&&block.timestamp>s[i].due+GRACE)return true;return false;}
- function canBorrow(bytes32 id) public view returns(bool){Member storage m=members[id];if(id==0||!scoreFresh(id)||!m.enabled||m.strikes>0||m.activeLoan!=0)return false;uint256[] storage b=backingLoans[id];for(uint256 i;i<b.length;i++)if(isOverdue(b[i]))return false;return true;}
- function canGuarantee(bytes32 id) public view returns(bool){Member storage m=members[id];if(id==0||!scoreFresh(id)||!m.enabled||m.strikes>0)return false;if(m.activeLoan!=0&&isOverdue(m.activeLoan))return false;uint256[] storage b=backingLoans[id];for(uint256 i;i<b.length;i++)if(isOverdue(b[i]))return false;return true;}
+ function canBorrow(bytes32 id) public view returns(bool){Member storage m=members[id];if(id==0||m.score<80||!scoreFresh(id)||!m.enabled||m.strikes>0||m.activeLoan!=0)return false;uint256[] storage b=backingLoans[id];for(uint256 i;i<b.length;i++)if(isOverdue(b[i]))return false;return true;}
+ function canGuarantee(bytes32 id) public view returns(bool){Member storage m=members[id];if(id==0||m.score<80||!scoreFresh(id)||!m.enabled||m.strikes>0)return false;if(m.activeLoan!=0&&isOverdue(m.activeLoan))return false;uint256[] storage b=backingLoans[id];for(uint256 i;i<b.length;i++)if(isOverdue(b[i]))return false;return true;}
  function requestLoan(uint256 amount,uint256 months_) external returns(uint256 id){bytes32 member=memberOf[msg.sender];require(phase==Phase.Lending&&!paused&&canBorrow(member),'Not eligible');require(amount>=10e6&&amount<=members[member].creditLimit&&amount<=MAX_LOAN&&months_>=1&&months_<=12,'Invalid terms');id=nextLoanId++;loans[id]=Loan(member,amount,amount,months_,block.timestamp,0,0,0,false,false,false);members[member].activeLoan=id;emit LoanRequested(id,member,amount,months_);}
- function guarantee(uint256 id,uint256 amount) external {Loan storage l=loans[id];bytes32 member=memberOf[msg.sender];require(!paused&&phase==Phase.Lending&&l.createdAt>0&&!l.closed&&l.activatedAt==0&&block.timestamp<=l.createdAt+7 days,'Request expired');require(member!=l.borrower&&canGuarantee(member),'Ineligible guarantor');Member storage m=members[member];uint256 cap=m.score>=40?500e6:m.score>=20?200e6:80e6;require(amount>0&&amount<=cap&&amount<=m.capacity-m.usedCapacity&&amount<=l.principal-l.coverage,'Capacity exceeded');require(contributions[id][member]==0&&backingLoans[member].length<MAX_BACKINGS&&guarantors[id].length<8,'Duplicate or full');contributions[id][member]=amount;guarantors[id].push(member);backingLoans[member].push(id);m.usedCapacity+=amount;l.coverage+=amount;emit Guaranteed(id,member,amount);}
+ function guarantee(uint256 id,uint256 amount) external {Loan storage l=loans[id];bytes32 member=memberOf[msg.sender];require(!paused&&phase==Phase.Lending&&l.createdAt>0&&!l.closed&&l.activatedAt==0&&block.timestamp<=l.createdAt+7 days,'Request expired');require(member!=l.borrower&&canGuarantee(member),'Ineligible guarantor');Member storage m=members[member];uint256 available=availableSupport(member);uint256 needed=l.principal-l.coverage;uint256 automatic=available<needed?available:needed;require(amount>0&&amount==automatic,'Automatic support only');require(contributions[id][member]==0&&backingLoans[member].length<MAX_BACKINGS&&guarantors[id].length<8,'Duplicate or full');contributions[id][member]=amount;guarantors[id].push(member);backingLoans[member].push(id);m.usedCapacity+=amount;l.coverage+=amount;emit Guaranteed(id,member,amount);}
  function cancelRequest(uint256 id) external {Loan storage l=loans[id];require(l.createdAt>0&&l.activatedAt==0&&!l.closed,'Not request');require(memberOf[msg.sender]==l.borrower||block.timestamp>l.createdAt+7 days,'Not authorized');l.closed=true;members[l.borrower].activeLoan=0;_release(id);}
- function activate(uint256 id) external nonReentrant {Loan storage l=loans[id];Member storage m=members[l.borrower];require(!paused&&phase==Phase.Lending&&memberOf[msg.sender]==l.borrower&&m.enabled&&m.strikes==0&&scoreFresh(l.borrower),'Not eligible');require(l.createdAt>0&&!l.closed&&l.activatedAt==0&&block.timestamp<=l.createdAt+7 days,'Invalid request');require(l.principal<=m.creditLimit&&l.coverage==l.principal,'Insufficient support');uint256[] storage backs=backingLoans[l.borrower];for(uint256 i;i<backs.length;i++)require(!isOverdue(backs[i]),'Guarantor blocked');bytes32[] storage gs=guarantors[id];for(uint256 i;i<gs.length;i++)require(canGuarantee(gs[i]),'Support invalid');require(token.balanceOf(address(this))>=l.principal,'Pool liquidity');l.activatedAt=block.timestamp;outstandingPrincipal+=l.principal;uint256 remain=l.principal;uint256 monthly=monthlyPayment(l.principal,l.months);for(uint256 i;i<l.months;i++){uint256 interest=remain*APR_BPS/120000;uint256 principal=i+1==l.months?remain:monthly-interest;remain-=principal;schedules[id].push(Installment(Calendar.addMonths(block.timestamp,i+1),principal,interest,0,0));}token.safeTransfer(msg.sender,l.principal);emit LoanActivated(id,msg.sender,l.principal);}
+ function activate(uint256 id) external nonReentrant {Loan storage l=loans[id];Member storage m=members[l.borrower];require(!paused&&phase==Phase.Lending&&memberOf[msg.sender]==l.borrower&&m.enabled&&m.score>=80&&m.strikes==0&&scoreFresh(l.borrower),'Not eligible');require(l.createdAt>0&&!l.closed&&l.activatedAt==0&&block.timestamp<=l.createdAt+7 days,'Invalid request');require(l.principal<=m.creditLimit&&l.coverage==l.principal,'Insufficient support');uint256[] storage backs=backingLoans[l.borrower];for(uint256 i;i<backs.length;i++)require(!isOverdue(backs[i]),'Guarantor blocked');bytes32[] storage gs=guarantors[id];for(uint256 i;i<gs.length;i++)require(canGuarantee(gs[i])&&members[gs[i]].usedCapacity<=scoreCapacity(members[gs[i]].score),'Support invalid');require(token.balanceOf(address(this))>=l.principal,'Pool liquidity');l.activatedAt=block.timestamp;outstandingPrincipal+=l.principal;uint256 remain=l.principal;uint256 monthly=monthlyPayment(l.principal,l.months);for(uint256 i;i<l.months;i++){uint256 interest=remain*APR_BPS/120000;uint256 principal=i+1==l.months?remain:monthly-interest;remain-=principal;schedules[id].push(Installment(Calendar.addMonths(block.timestamp,i+1),principal,interest,0,0));}token.safeTransfer(msg.sender,l.principal);emit LoanActivated(id,msg.sender,l.principal);}
  function pow(uint256 x,uint256 n) internal pure returns(uint256 z){z=WAD;while(n>0){if(n&1!=0)z=z*x/WAD;n>>=1;if(n>0)x=x*x/WAD;}}
  function monthlyPayment(uint256 principal,uint256 months_) public pure returns(uint256){require(months_>=1&&months_<=12,'Term');uint256 r=APR_BPS*WAD/120000;uint256 factor=pow(WAD+r,months_);return principal*r*factor/(factor-WAD)/WAD;}
  function _extra(Installment memory s) internal view returns(uint256,uint256){if(block.timestamp<=s.due)return(0,0);uint256 day=(block.timestamp-s.due)/1 days;if(day<=s.chargedDay)return(0,day);uint256 elapsed=day-s.chargedDay;if(elapsed>3650)elapsed=3650;uint256 base=s.principal+s.interest+s.penalty;uint256 increased=base*pow(WAD+WAD*20/100/365,elapsed)/WAD;return(increased-base,day);}
@@ -113,8 +137,10 @@ contract Dank is Ownable2Step, ReentrancyGuard {
  function recordDefault(uint256 id) external {_recordDefault(id);}
  function _recordDefault(uint256 id) internal {Loan storage l=loans[id];if(l.activatedAt==0||l.closed||l.defaultRecorded)return;Installment[] storage s=schedules[id];for(uint256 i;i<s.length;i++)if(s[i].principal+s[i].interest+s[i].penalty>0&&block.timestamp>s[i].due+DEFAULT_AFTER){l.defaultRecorded=true;members[l.borrower].strikes++;bytes32[] storage gs=guarantors[id];for(uint256 j;j<gs.length;j++)members[gs[j]].strikes++;emit DefaultRecorded(id);return;}}
  function recognizeLoss(uint256 id) external onlyOwner {Loan storage l=loans[id];require(l.activatedAt>0&&!l.closed&&!l.lossRecognized,'Invalid loss');Installment[] storage s=schedules[id];bool eligible;for(uint256 i;i<s.length;i++)if(s[i].principal+s[i].interest+s[i].penalty>0&&block.timestamp>s[i].due+LOSS_AFTER)eligible=true;require(eligible,'Too early');_recordDefault(id);l.lossRecognized=true;outstandingPrincipal-=l.outstanding;emit LossRecognized(id,l.outstanding);}
- function depositCapital(uint256 amount) external nonReentrant {require(phase==Phase.Funding&&amount>0&&memberOf[msg.sender]!=0&&members[memberOf[msg.sender]].enabled,'Funding closed');deposits[msg.sender]+=amount;totalDeposits+=amount;token.safeTransferFrom(msg.sender,address(this),amount);emit CapitalDeposited(msg.sender,amount);}
+ function depositCapital(uint256 amount) external nonReentrant {_deposit(amount,0);}
+ function depositCapitalWithMinShares(uint256 amount,uint256 minShares) external nonReentrant {_deposit(amount,minShares);}
+ function _deposit(uint256 amount,uint256 minShares) internal {require(!paused&&phase!=Phase.Settled&&amount>0,'Funding closed');require(acceptedRisk[msg.sender]==RISK_POLICY,'Accept risks first');uint256 minted=previewDeposit(amount);require(minted>0&&minted>=minShares,'Deposit slippage');if(shares[msg.sender]==0)liquidityProviders.push(msg.sender);deposits[msg.sender]+=amount;totalDeposits+=amount;shares[msg.sender]+=minted;totalShares+=minted;token.safeTransferFrom(msg.sender,address(this),amount);emit CapitalDeposited(msg.sender,amount);emit SharesMinted(msg.sender,amount,minted);}
  function startLending() external onlyOwner {require(phase==Phase.Funding&&totalDeposits>0,'No capital');phase=Phase.Lending;emit PhaseChanged(phase);}
  function settleCohort() external onlyOwner {require(phase==Phase.Lending&&outstandingPrincipal==0,'Outstanding loans');phase=Phase.Settled;cumulativeDistributable=token.balanceOf(address(this));emit PhaseChanged(phase);}
- function claimCapital() external nonReentrant {require(phase==Phase.Settled,'Not settled');uint256 entitled=cumulativeDistributable*deposits[msg.sender]/totalDeposits;uint256 amount=entitled-claimed[msg.sender];require(amount>0,'Nothing claimable');claimed[msg.sender]=entitled;token.safeTransfer(msg.sender,amount);emit CapitalClaimed(msg.sender,amount);}
+ function claimCapital() external nonReentrant {require(phase==Phase.Settled,'Not settled');uint256 entitled=Math.mulDiv(cumulativeDistributable,shares[msg.sender],totalShares);uint256 amount=entitled-claimed[msg.sender];require(amount>0,'Nothing claimable');claimed[msg.sender]=entitled;token.safeTransfer(msg.sender,amount);emit CapitalClaimed(msg.sender,amount);}
 }

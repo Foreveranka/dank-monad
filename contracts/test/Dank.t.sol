@@ -6,7 +6,7 @@ interface Vm {function warp(uint256) external;function prank(address) external;f
 contract DankTest {
  Vm constant vm=Vm(address(uint160(uint256(keccak256('hevm cheat code')))));
  Dank d;TestUSD t;address a=address(11);address g=address(12);address b=address(13);bytes32 A=keccak256('A');bytes32 G=keccak256('G');bytes32 B=keccak256('B');
- function setUp() public {vm.warp(1790416800);t=new TestUSD();d=new Dank(address(t),address(this));d.enroll(A,a);d.enroll(G,g);d.enroll(B,b);d.enroll(keccak256('admin'),address(this));d.verifyAchievement(A,keccak256('a-win'),1);d.verifyAchievement(G,keccak256('g-win1'),1);d.verifyAchievement(G,keccak256('g-win2'),1);d.verifyAchievement(B,keccak256('b-win'),1);d.setLimits(A,1000e6,1000e6);d.setLimits(G,1000e6,1000e6);d.setLimits(B,1000e6,1000e6);t.faucet();t.approve(address(d),type(uint256).max);d.depositCapital(10000e6);d.startLending();}
+ function setUp() public {vm.warp(1790416800);t=new TestUSD();d=new Dank(address(t),address(this));d.enroll(A,a);d.enroll(G,g);d.enroll(B,b);d.enroll(keccak256('admin'),address(this));d.verifyAchievement(A,keccak256('a-win'),1);d.verifyAchievement(G,keccak256('g-win1'),1);d.verifyAchievement(G,keccak256('g-win2'),1);d.verifyAchievement(B,keccak256('b-win'),1);d.updateWalletScore(A,60,keccak256('a-score'),block.timestamp+7 days);d.updateWalletScore(G,70,keccak256('g-score'),block.timestamp+7 days);d.updateWalletScore(B,60,keccak256('b-score'),block.timestamp+7 days);d.setLimits(A,1000e6,1000e6);d.setLimits(G,1000e6,1000e6);d.setLimits(B,1000e6,1000e6);t.faucet();t.approve(address(d),type(uint256).max);d.acceptRisk(d.RISK_POLICY());d.depositCapital(10000e6);d.startLending();}
  function open(uint256 n) internal returns(uint256 id){vm.prank(a);id=d.requestLoan(200e6,n);vm.prank(g);d.guarantee(id,200e6);vm.prank(a);d.activate(id);}
  function testLifecycle() public {uint256 id=open(12);require(t.balanceOf(a)==200e6);uint256 quote=d.payoff(id);require(quote==200e6);vm.startPrank(a);t.approve(address(d),type(uint256).max);d.repayAll(id,quote);vm.stopPrank();require(d.canBorrow(A));require(d.outstandingPrincipal()==0);d.settleCohort();d.claimCapital();require(t.balanceOf(address(this))==10000e6);}
  function testOverdueBlocksGuarantorWithoutKeeper() public {uint256 id=open(1);Dank.Installment[] memory s=d.getSchedule(id);vm.warp(s[0].due+3 days+1);require(!d.canBorrow(G));vm.startPrank(g);vm.expectRevert();d.requestLoan(20e6,1);vm.stopPrank();}
@@ -15,7 +15,7 @@ contract DankTest {
  function testNoSelfGuarantee() public {vm.prank(a);uint256 id=d.requestLoan(100e6,1);vm.startPrank(a);vm.expectRevert();d.guarantee(id,100e6);vm.stopPrank();}
  function testCannotBorrowWithoutMembership() public {vm.startPrank(address(99));vm.expectRevert();d.requestLoan(100e6,1);vm.stopPrank();}
  function testEvidenceReplay() public {vm.expectRevert();d.verifyAchievement(A,keccak256('a-win'),1);}
- function testExpiryReleasesCapacity() public {vm.prank(a);uint256 id=d.requestLoan(200e6,1);vm.prank(g);d.guarantee(id,200e6);vm.warp(block.timestamp+8 days);d.cancelRequest(id);require(d.getBackings(G).length==0);require(d.canBorrow(A));}
+ function testExpiryReleasesCapacity() public {vm.prank(a);uint256 id=d.requestLoan(200e6,1);vm.prank(g);d.guarantee(id,200e6);vm.warp(block.timestamp+8 days);d.cancelRequest(id);require(d.getBackings(G).length==0);d.updateWalletScore(A,60,keccak256('renewed-after-cancel'),block.timestamp+7 days);require(d.canBorrow(A));}
  function testWalletRotationPreservesLoan() public {uint256 id=open(1);vm.prank(a);d.proposeWallet(address(100));vm.prank(address(100));d.acceptWallet(A);require(d.memberOf(a)==0&&d.memberOf(address(100))==A);require(!d.canBorrow(A));vm.startPrank(a);vm.expectRevert();d.requestLoan(50e6,1);vm.stopPrank();require(d.payoff(id)==200e6);}
  function testDefaultIdempotentAndNotErasedByRepayment() public {uint256 id=open(1);Dank.Installment[] memory s=d.getSchedule(id);vm.warp(s[0].due+31 days);d.recordDefault(id);d.recordDefault(id);(,,,,,,uint256 strikes,)=d.members(G);require(strikes==1);vm.startPrank(a);t.faucet();t.approve(address(d),type(uint256).max);d.repayAll(id,d.payoff(id));vm.stopPrank();require(!d.canBorrow(G));}
  function testPartialPaymentsDoNotResetPenaltyClock() public {uint256 id=open(1);Dank.Installment[] memory s=d.getSchedule(id);vm.warp(s[0].due+10 days+12 hours);uint256 before_=d.dueNow(id);vm.startPrank(a);t.faucet();t.approve(address(d),type(uint256).max);d.repay(id,1);vm.stopPrank();require(d.dueNow(id)==before_-1);vm.warp(s[0].due+11 days);require(d.dueNow(id)>before_);}
@@ -23,13 +23,53 @@ contract DankTest {
  function testLossRecoveryGoesToOriginalCapital() public {uint256 id=open(1);Dank.Installment[] memory s=d.getSchedule(id);vm.warp(s[0].due+91 days);d.recognizeLoss(id);d.settleCohort();d.claimCapital();require(t.balanceOf(address(this))==9800e6);vm.startPrank(a);t.faucet();t.approve(address(d),type(uint256).max);uint256 quote=d.payoff(id);d.repayAll(id,quote);vm.stopPrank();d.claimCapital();require(t.balanceOf(address(this))==9800e6+quote);}
  function testFuzzAmortization(uint96 raw,uint8 term) public {uint256 amount=10e6+uint256(raw)%190000001;uint256 months_=1+uint256(term)%12;vm.prank(a);uint256 id=d.requestLoan(amount,months_);vm.prank(g);d.guarantee(id,amount);vm.prank(a);d.activate(id);Dank.Installment[] memory s=d.getSchedule(id);uint256 sum;uint256 last;for(uint256 i;i<s.length;i++){sum+=s[i].principal;require(s[i].due>last);last=s[i].due;}require(sum==amount);}
  function testCalendarEndOfMonth() public pure {require(Calendar.addMonths(1706659200,1)==1709164800);require(Calendar.addMonths(1706659200,2)==1711843200);}
- function testFiveWinsOnlyTwentyPoints() public {for(uint256 i;i<5;i++)d.verifyAchievement(A,keccak256(abi.encode("extra-win",i)),1);(,uint256 score,,,,,,)=d.members(A);require(score==20&&d.hackathonScore(A)==20);}
+ function testFiveWinsOnlyTwentyPoints() public {for(uint256 i;i<5;i++)d.verifyAchievement(A,keccak256(abi.encode("extra-win",i)),1);(,uint256 score,,,,,,)=d.members(A);require(score==80&&d.hackathonScore(A)==20);}
  function testFirstPodiumLocksScoreAndNoStacking() public {bytes32 id=keccak256('new');d.enroll(id,address(555));d.verifyAchievement(id,keccak256('participation'),0);require(d.hackathonScore(id)==1);d.verifyAchievement(id,keccak256('third'),3);require(d.hackathonScore(id)==5);d.verifyAchievement(id,keccak256('second'),2);require(d.hackathonScore(id)==5);d.verifyAchievement(id,keccak256('first'),1);d.verifyAchievement(id,keccak256('later-participation'),0);(,uint256 score,,,,,,)=d.members(id);require(score==5);}
  function testInvalidRankAndUnauthorizedScoring() public {vm.expectRevert();d.verifyAchievement(A,keccak256('invalid'),4);vm.startPrank(a);vm.expectRevert();d.verifyAchievement(A,keccak256('forged'),1);vm.stopPrank();}
- function testMigrationCannotRestartHackathonPoints() public {vm.prank(a);d.proposeWallet(address(100));vm.prank(address(100));d.acceptWallet(A);d.verifyAchievement(A,keccak256('new-wallet-win'),1);(,uint256 score,,,,,,)=d.members(A);require(score==20);}
+ function testMigrationCannotRestartHackathonPoints() public {vm.prank(a);d.proposeWallet(address(100));vm.prank(address(100));d.acceptWallet(A);d.verifyAchievement(A,keccak256('new-wallet-win'),1);(,uint256 score,,,,,,)=d.members(A);require(score==80);}
  function testWalletScoreCapAndReplacement() public {d.updateWalletScore(A,80,keccak256('snapshot1'),block.timestamp+7 days);(,uint256 score,,,,,,)=d.members(A);require(score==100);d.updateWalletScore(A,10,keccak256('snapshot2'),block.timestamp+7 days);(,score,,,,,,)=d.members(A);require(score==30);vm.expectRevert();d.updateWalletScore(A,81,keccak256('overflow'),block.timestamp+7 days);vm.expectRevert();d.updateWalletScore(A,10,keccak256('snapshot2'),block.timestamp+7 days);}
  function testExpiredAssessmentStopsNewBorrowing() public {d.updateWalletScore(A,10,keccak256('expiry'),block.timestamp+1 days);vm.warp(block.timestamp+1 days+1);require(!d.canBorrow(A));vm.startPrank(a);vm.expectRevert();d.requestLoan(10e6,1);vm.stopPrank();}
  function testWalletScoreCannotClearDefault() public {uint256 id=open(1);Dank.Installment[] memory s=d.getSchedule(id);vm.warp(s[0].due+31 days);d.recordDefault(id);d.updateWalletScore(G,80,keccak256('recovered'),block.timestamp+7 days);require(!d.canBorrow(G));}
- function testPublicRegistrationAndStarterLoan() public {address newcomer=address(900);vm.prank(newcomer);bytes32 id=d.register();(,uint256 score,uint256 limit,,,,,)=d.members(id);require(score==0&&limit==80e6);vm.prank(newcomer);uint256 loan=d.requestLoan(80e6,1);vm.prank(g);d.guarantee(loan,80e6);vm.prank(newcomer);d.activate(loan);require(t.balanceOf(newcomer)==80e6);vm.startPrank(newcomer);vm.expectRevert();d.register();vm.stopPrank();}
+ function testPublicRegistrationAndStarterLoan() public {address newcomer=address(900);vm.prank(newcomer);bytes32 id=d.register();(,uint256 score,uint256 limit,,,,,)=d.members(id);require(score==0&&limit==80e6);vm.startPrank(newcomer);vm.expectRevert();d.requestLoan(80e6,1);vm.stopPrank();d.updateWalletScore(id,80,keccak256('newcomer-score'),block.timestamp+7 days);vm.prank(newcomer);uint256 loan=d.requestLoan(80e6,1);vm.prank(g);d.guarantee(loan,80e6);vm.prank(newcomer);d.activate(loan);require(t.balanceOf(newcomer)==80e6);vm.startPrank(newcomer);vm.expectRevert();d.register();vm.stopPrank();}
  function testRotationCannotReclaimStarterIdentity() public {vm.prank(address(901));bytes32 id=d.register();vm.prank(address(901));d.proposeWallet(address(902));vm.prank(address(902));d.acceptWallet(id);vm.startPrank(address(901));vm.expectRevert();d.register();vm.stopPrank();}
+
+ function testLowScoreDeniedAndBoundaryAccepted() public {
+  d.assignTestScore(A,79,block.timestamp+7 days);require(!d.canBorrow(A));require(!d.canGuarantee(A));
+  vm.startPrank(a);vm.expectRevert();d.requestLoan(10e6,1);vm.stopPrank();
+  d.assignTestScore(A,80,block.timestamp+7 days);require(d.canBorrow(A));
+  vm.prank(a);d.requestLoan(10e6,1);
+ }
+ function testSupportIsTotalAcrossLoans() public {
+  d.assignTestScore(G,83,block.timestamp+7 days);
+  vm.prank(a);uint256 first=d.requestLoan(50e6,1);vm.prank(g);d.guarantee(first,50e6);
+  vm.prank(b);uint256 second=d.requestLoan(50e6,1);vm.startPrank(g);vm.expectRevert();d.guarantee(second,50e6);d.guarantee(second,30e6);vm.stopPrank();
+  require(d.availableSupport(G)==0);
+ }
+ function testSupportCannotBeChosenByCaller() public {
+  vm.prank(a);uint256 id=d.requestLoan(80e6,1);vm.startPrank(g);vm.expectRevert();d.guarantee(id,10e6);d.guarantee(id,80e6);vm.stopPrank();
+ }
+ function testDowngradeBlocksActivationWithoutErasingSupport() public {
+  vm.prank(a);uint256 id=d.requestLoan(200e6,1);vm.prank(g);d.guarantee(id,200e6);
+  d.assignTestScore(G,83,block.timestamp+7 days);require(d.availableSupport(G)==0);
+  vm.startPrank(a);vm.expectRevert();d.activate(id);d.cancelRequest(id);vm.stopPrank();require(d.availableSupport(G)==80e6);
+ }
+ function testSyntheticScorePermissionAndExpiry() public {
+  vm.startPrank(a);vm.expectRevert();d.assignTestScore(A,100,block.timestamp+7 days);vm.stopPrank();
+  d.assignTestScore(A,100,block.timestamp+1 days);vm.warp(block.timestamp+1 days+1);require(!d.canBorrow(A));
+ }
+
+ function testLateLiquidityBuysProportionalShares() public {
+  vm.startPrank(address(701));t.faucet();t.approve(address(d),type(uint256).max);vm.expectRevert();d.depositCapital(2000e6);d.acceptRisk(d.RISK_POLICY());d.depositCapital(2000e6);vm.stopPrank();
+  require(d.poolAssets()==12000e6);require(d.shares(address(701))*6==d.totalShares());
+ }
+ function testLoansReduceCashButNotPoolBookAssets() public {
+  open(1);require(t.balanceOf(address(d))==9800e6);require(d.poolAssets()==10000e6);
+ }
+ function testLossIsSharedAndLateRecoveryUsesShares() public {
+  uint256 id=open(1);vm.startPrank(address(701));t.faucet();t.approve(address(d),type(uint256).max);d.acceptRisk(d.RISK_POLICY());d.depositCapital(2000e6);vm.stopPrank();
+  Dank.Installment[] memory sc=d.getSchedule(id);vm.warp(sc[0].due+91 days);d.recognizeLoss(id);require(d.poolAssets()==11800e6);d.settleCohort();vm.prank(address(701));d.claimCapital();require(t.balanceOf(address(701))==8000e6+uint256(11800e6)/6);
+ }
+ function testRiskPolicyAndSettledDeposits() public {
+  vm.expectRevert();d.acceptRisk(bytes32(0));d.settleCohort();vm.expectRevert();d.depositCapital(1e6);
+ }
 }

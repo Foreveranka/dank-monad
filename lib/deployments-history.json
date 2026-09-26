@@ -1,0 +1,30 @@
+[
+  {
+    "chainId": 10143,
+    "rpc": "https://testnet-rpc.monad.xyz",
+    "explorer": "https://testnet.monadscan.com",
+    "protocol": "0xca0a06d459f6fe0593a00c670153e675289b9519",
+    "token": "0x21f8f91324cb5a123101abc2faf36d2a294d6089",
+    "admin": "0x5683d9AC05d4A89624a42Fc313E33f94E56d0A1A",
+    "tokenSymbol": "USD",
+    "deployed": true,
+    "deploymentBlock": 65858769,
+    "version": 2,
+    "archived": true,
+    "reason": "Replaced with score-based total capacity and LP shares",
+    "replacement": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+  },
+  {
+    "chainId": 10143,
+    "rpc": "https://testnet-rpc.monad.xyz",
+    "explorer": "https://testnet.monadscan.com",
+    "protocol": "0x99dd8f006e1c0e979dfef212c06c81b148217e1c",
+    "token": "0x21f8f91324cb5a123101abc2faf36d2a294d6089",
+    "admin": "0x5683d9AC05d4A89624a42Fc313E33f94E56d0A1A",
+    "tokenSymbol": "USD",
+    "deployed": true,
+    "archived": true,
+    "reason": "Replaced with score-based total capacity rules",
+    "replacement": "0xca0a06d459f6fe0593a00c670153e675289b9519"
+  }
+]

@@ -4,7 +4,7 @@ import deployment from './deployment.json';
 const config: {chainId:number;rpc:string;explorer:string;protocol:Address|null;token:Address|null;admin:string;tokenSymbol:string;deployed:boolean}={...deployment,protocol:deployment.protocol as Address|null,token:deployment.token as Address|null};
 import abi from './protocol-abi.json';
 export {config,abi};
-export const publicClient=createPublicClient({chain:monadTestnet,transport:http(config.rpc,{timeout:15000})});
+export const publicClient=createPublicClient({chain:monadTestnet,batch:{multicall:{wait:20,batchSize:8192}},transport:http(config.rpc,{timeout:15000})});
 export const tokenAbi=parseAbi(['function balanceOf(address) view returns (uint256)','function approve(address,uint256) returns (bool)','function faucet()']);
 export const units=(v:number|string)=>parseUnits(String(v),6);
 export const display=(v:bigint)=>Number(formatUnits(v,6));

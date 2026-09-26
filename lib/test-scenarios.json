@@ -1,0 +1,296 @@
+{
+  "protocol": "0x47dab54e55b5d4abf32ea385443224938a75dfe6",
+  "chainId": 10143,
+  "verifiedAt": "2026-09-26T13:14:03.462Z",
+  "status": "complete",
+  "syntheticScores": true,
+  "wallets": [
+    {
+      "address": "0x0B643775CD4028F6238d760c7fe62A97d981DF5A",
+      "score": 80,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0x64aba430d00178df439d102751919de0b19177c4f7c43778f0d5746b517f6978",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0xa7b5089fc3f18a44847e67178d6922f75a43aac6b69b35110974f011dc978f43",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x84005096134e2f0810e2f8d6b499561c7a82ad3acc365ad89dc59397ab94c5ad",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "requestLoan",
+          "hash": "0x5b6c41e309a97c178fee13bf704a57f3a12311208c21e67bc7818b3a24e3b60c",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "guarantee",
+          "hash": "0x5e9c759d82b55156430e7e8892792562c3b79c12157567ace7630e07d654c5db",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "activate",
+          "hash": "0xf4e169c031817f1d2cae1d5ef846588dd52437ef04ffcfc65f19bcaafc9e8ce4",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "faucet",
+          "hash": "0x119c93954c1de1ff0e266866dc1cb1ed889a42b343fde5c6b6769d9155b2923e",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "approve",
+          "hash": "0x5e5130472edc4cbcef1908dd0793594e94312863c0c73bccaa89982f541e2565",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "repayAll",
+          "hash": "0x40d6a38b9ad0a7045347af3635ab2229e170d13de0c26cda58d3d94337f8005e",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "memberId": "0x0e273aab57cfe5d49b47c423887be2cad631ac8aac8347a0974a3447ced926d3",
+      "profileSet": true,
+      "loanId": 1,
+      "status": "accepted",
+      "repaymentHash": "0x40d6a38b9ad0a7045347af3635ab2229e170d13de0c26cda58d3d94337f8005e",
+      "repaid": true
+    },
+    {
+      "address": "0x54691717dC6db26fa9D05Cf5DED9413a0B438029",
+      "score": 85,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0xf4f590d351bbef8f84f57889d55cd693de6e35eb83317f415e84a4c6d86e8577",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0xa7c1c0e166061f29fdc1636d31f89bacf4a527fb7de03ea77faa490a150210f5",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x6dc3f2898159a40d0f57ecffa554b81230ec68fea3cb0ced0a5629773a37f793",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "requestLoan",
+          "hash": "0x77649f04a0b9f282ca4ba4f46b7dfb0a023cb55c14f5cc51dbb6e33a8d8c23d3",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "guarantee",
+          "hash": "0xa4e51ad01c2a0fe0b6ef128f9105c2b5f6bfbeada32b78e6c255d5cc0f33280e",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "activate",
+          "hash": "0x90c6ecd0c6d76e5ba7fcdc25356302031ef9a330122d315b913220b27cbd1535",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "faucet",
+          "hash": "0xc697c00ff82921be3a158df4eb8e5d952b9e766867bff1198af54b7fe4526b0e",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "approve",
+          "hash": "0xcbc9d1a0d718c6292f2d3a15f7140b4005e85d78a845ccd2b22756220163dbd2",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "repayAll",
+          "hash": "0x4ca90874426072e479997df61ddffc6b7afe07c9278fb1844f6d0184a407010f",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "gasFunding": "0x8a64c83d4dd72cbc43c5122c792ff9bdb1d8b8a33b1ce9d5919ebb5904645c46",
+      "memberId": "0x76cde13d031b5b69e45b81fb0171cf2b94d0ee1e3f6f227299af4c1af2f5924c",
+      "profileSet": true,
+      "loanId": 2,
+      "status": "accepted",
+      "repaymentHash": "0x4ca90874426072e479997df61ddffc6b7afe07c9278fb1844f6d0184a407010f",
+      "repaid": true
+    },
+    {
+      "address": "0x55BE50EEce662Bd92A8a32E74Aa6A98227f4F340",
+      "score": 90,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0x933883748330a0501ea60cf06a532e3e9c5e17143a34cc48f4e53a7cc1297059",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x62c7f2e0243eb7a995a941d7f766ae532e310a43c8fb643836b174ef7aa95055",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x66b8e645199987bbe13d6abc190f4e2f45e88a71c11cefba2f148f43fce0cbb4",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "requestLoan",
+          "hash": "0x896bbffa999251958d98cc3b984a300762b355d293d0e538420b356bb29a1ebb",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "guarantee",
+          "hash": "0xf1225a371a7c25cafba6d5e3a6f2d4afafc8bc58a17ec098d81db2646a40c36c",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "activate",
+          "hash": "0x3daef66dc5a4f05fd2e90b378606047bd24bcd364197b7fb30c7ea75fe1edf0d",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "gasFunding": "0x80e329f57f459d7cf43a6eae8fd22b5b38c7d185ebbfd2edf736e78d30c9f20d",
+      "memberId": "0x84ebc751adee7c3b283595483165e3f779dd3aeb74f297a4b64e7326087f82a9",
+      "profileSet": true,
+      "loanId": 3,
+      "status": "accepted"
+    },
+    {
+      "address": "0xfd8ef89769f80f4b6Ec7D99544ED29DB4deDB6AC",
+      "score": 95,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0x2e0b698b3c98ee37981f075d05b0cd9c4e0b4df132edb6f1c4e0f9f4cf1b8dc8",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0x306b1a84392d208a5ffd0643b25b23f6c70d8bf3764eb981a0e45e748d465a44",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x255f4358368fe1d39331f2a5b1d1dcde44a1dbe96193b5c19cdf0944b4c5b70e",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "requestLoan",
+          "hash": "0xfddf4d33d9331799cea613e0340315cd153a44e3f08d0eddaeba49bdb88c9e76",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "guarantee",
+          "hash": "0x64beda5d3861caee796db3ed4dbfdbb585ee3b5837547d73149bc1ff69d46f95",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "activate",
+          "hash": "0xe39b15e0d5b5b5ec0d7b8fd330dc944fda1e22ab9871e9e917f3c6de888dd95b",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "gasFunding": "0xe7d447a9eb289352a0f0c8cdd8d3e574fd99226494c9b1022f19567f92135913",
+      "memberId": "0x2227ccc33abce06b00cea1e4e658c3d1110c3a148df0db37136b702015e6583c",
+      "profileSet": true,
+      "loanId": 4,
+      "status": "accepted"
+    },
+    {
+      "address": "0x52BE31C1D851BAB45Fa5133F6De1166670B069CF",
+      "score": 100,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0xbf7afe957183c89f72f9e96d5c33cba2a2d95f32d6cfae501f8d1f54f8faba22",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0xfc1a594c72aa3057cbd2517cee9498fcdfe8d8b5f6c8c6ab83a675ceb0236147",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0x01b73e99b68538cb38f7144112373b96fe0181fd9c5c098ea9ece301dc27ce06",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "requestLoan",
+          "hash": "0xae271d30c5206a40ed669ceb56674118cb62a42f26b8bf90f27f042cb2ca3d9f",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "guarantee",
+          "hash": "0xd39b42dd49cfec33b935ce48d3a22da633a7a09258c400ea5495a503b91296ac",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "activate",
+          "hash": "0xcedddc8241f5ee1279e439e0930e399e53e21cac0f4d5b9465ecb58e977121ca",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "gasFunding": "0x066269efffbc90a60fd47e2f405bbc1b18a97612f4181dbf8c3db17e251a6b94",
+      "memberId": "0xd03ced6ca8f8a6ff684666f23ed2d2909ab5a4a7074473989e8a59bd00048bc1",
+      "profileSet": true,
+      "loanId": 5,
+      "status": "accepted"
+    },
+    {
+      "address": "0x8468ea5ecA953F2369032ed604Ff623411A6b2F7",
+      "score": 79,
+      "transactions": [
+        {
+          "action": "register",
+          "hash": "0x2f90e47449ddf93d4a5f7dc85c49c7bcd7e8f4ed17822bc5b57f33929f3f6745",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "assignTestScore",
+          "hash": "0xbde97a626cf1eb84c68b34902ef7c28a43a6d4256d7e0fadfe6541e3fb2d9119",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "setLimits",
+          "hash": "0xb4707d65de0ce83a6d0fb1deba3e766b3a106b835762c3bfc2d942debdaa46a8",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "faucet",
+          "hash": "0xf99383efc0cfd1fffd144708b7ae12429dd01d6277eef6ae1f053b6cdcd1aa25",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "acceptRisk",
+          "hash": "0x3fb99dd344b431389087789a5d2e60f3b7345c6c07e21c079a1336cf003895e8",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        },
+        {
+          "action": "approve",
+          "hash": "0x2c54c227c8b87c4e5380e97a9522e2694d600c3215f466d0e4b827668c9686ed",
+          "address": "0x21f8f91324cb5a123101abc2faf36d2a294d6089"
+        },
+        {
+          "action": "depositCapital",
+          "hash": "0x1f70a3c1cad0b44c68013adff1806e9831d589474c4d2610e2fab93c035a5117",
+          "address": "0x47dab54e55b5d4abf32ea385443224938a75dfe6"
+        }
+      ],
+      "gasFunding": "0x2c703842048a32871a278dc380d7fef9dfcba5dd48e3e928ad23efff7b2f36f1",
+      "memberId": "0x34d6c26b1599de605cfd2f1e48486f8b50acaba3cafc6e79e5b3a3e64395ddc3",
+      "profileSet": true,
+      "liquidityAdded": "10000",
+      "initialOwnership": "1/6",
+      "rejectionHash": "0x8061a025de117f8b0d984388eb5d7c11e1bdff1930f4c0f958f8867b842c0e76",
+      "status": "rejected",
+      "reason": "SCORE_BELOW_80"
+    }
+  ]
+}
