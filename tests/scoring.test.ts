@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluateWallet,nextHackathonScore,type WalletEvidence} from '../lib/scoring.ts';
+const now=1790416800000;
+const full:WalletEvidence={chainId:143,observedAt:now,complete:true,source:'verified-test-fixture',metrics:{history:100,volume:1e9,balance:1e9,swaps:100,lending:1e9,repayment:100,liquidity:1e9},defaulted:false,overdue:false,liquidations:0,suspicious:false};
+test('all wallet components cap at 80 even with extreme activity',()=>{assert.equal(evaluateWallet(full,now).points,80)});
+test('missing data never becomes a complete credit assessment',()=>{const r=evaluateWallet({...full,metrics:{history:12}},now);assert.equal(r.creditScore,null);assert.equal(r.covered,1)});
+test('testnet data cannot qualify for mainnet economic score',()=>{assert.equal(evaluateWallet({...full,chainId:10143},now).creditScore,null)});
+test('future and expired observations fail closed',()=>{for(const observedAt of [now+1,now-8*86400000])assert.equal(evaluateWallet({...full,observedAt},now).creditScore,null)});
+test('default, arrears and suspicious activity override a perfect score',()=>{for(const key of ['defaulted','overdue','suspicious'])assert.equal(evaluateWallet({...full,[key]:true},now).creditScore,null)});
+test('nonfinite metric values are unknown',()=>{for(const balance of [NaN,Infinity,-1])assert.equal(evaluateWallet({...full,metrics:{...full.metrics,balance}},now).creditScore,null)});
+test('liquidations reduce score without unbounded negative values',()=>{assert.equal(evaluateWallet({...full,liquidations:10},now).points,60)});
+test('first third-place result cannot later be upgraded or repeated',()=>{let r=nextHackathonScore(0,false,0);assert.equal(r.points,1);r=nextHackathonScore(r.points,r.firstPodiumClaimed,3);assert.equal(r.points,5);for(let i=0;i<5;i++)r=nextHackathonScore(r.points,r.firstPodiumClaimed,1);assert.equal(r.points,5)});
+test('invalid placement rejected',()=>assert.throws(()=>nextHackathonScore(0,false,4)));

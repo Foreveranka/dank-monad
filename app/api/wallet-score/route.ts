@@ -1,0 +1,6 @@
+import {createPublicClient,http,isAddress,formatEther} from 'viem';
+import {monad} from 'viem/chains';
+import {evaluateWallet} from '@/lib/scoring';
+// Native RPC is only a snapshot. It cannot prove protocol history, USD volume or repayment.
+const client=createPublicClient({chain:monad,transport:http('https://rpc.monad.xyz',{timeout:10000,retryCount:1})});
+export async function GET(r:Request){const address=new URL(r.url).searchParams.get('address');if(!address||!isAddress(address))return Response.json({error:'INVALID_ADDRESS'},{status:400});try{if(await client.getChainId()!==143)throw new Error('WRONG_CHAIN');const block=await client.getBlockNumber();const [balance,nonce]=await Promise.all([client.getBalance({address,blockNumber:block}),client.getTransactionCount({address,blockNumber:block})]);return Response.json({address,chainId:143,block:block.toString(),observedAt:Date.now(),nativeBalance:formatEther(balance),outgoingNonce:nonce,historyAvailable:false,assessment:evaluateWallet({chainId:143,observedAt:Date.now(),complete:false,source:'Monad JSON-RPC snapshot',metrics:{},defaulted:false,overdue:false,liquidations:0,suspicious:false})},{headers:{'Cache-Control':'public, max-age=60'}})}catch{return Response.json({error:'SOURCE_UNAVAILABLE'},{status:502})}}
