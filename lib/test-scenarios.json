@@ -383,11 +383,19 @@
         {
           "action": "setLimits",
           "hash": "0x9d030c0f6ccbe9e43cc7a7def9ddeabe2698f3a9c6b52b1b6b6b8e975fcd6712"
+        },
+        {
+          "action": "repayAll",
+          "hash": "0xd903dfb275a32b138f2baf81ab51db6d128aaf9434ba23f7e8a123c5d1cebbca"
         }
       ],
-      "status": "registered",
+      "status": "accepted",
       "synthetic": true,
-      "demo": true
+      "demo": true,
+      "loanId": 6,
+      "repaid": true,
+      "repaymentHash": "0xd903dfb275a32b138f2baf81ab51db6d128aaf9434ba23f7e8a123c5d1cebbca",
+      "repaymentPayer": "0x65F00BfE97c98b050275A076327A8C34A9bE7CFd"
     }
   ]
 }
