@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {switchToTestnet} from '../lib/wallet-network.ts';
+const network={chainId:10143,rpc:'https://testnet-rpc.monad.xyz',explorer:'https://testnet.monadscan.com'};
+function mock(error:unknown,autoSwitch=false){let chain='0x1',added=false;const calls:string[]=[];return {calls,provider:{async request({method,params}:any){calls.push(method);if(method==='eth_chainId')return chain;if(method==='wallet_addEthereumChain'){assert.equal(params[0].chainId,'0x279f');added=true;if(autoSwitch)chain='0x279f';return null;}if(method==='wallet_switchEthereumChain'){if(!added)throw error;chain='0x279f';return null;}throw new Error(method)}}};}
+for(const error of [{code:4902},{code:'4902'},{code:-32603,data:{originalError:{code:4902}}},{cause:{message:'Unrecognized chain ID "0x279f". Try adding the chain using wallet_switchEthereumChain first.'}}])test('Adds missing chain and switches: '+JSON.stringify(error),async()=>{const m=mock(error);await switchToTestnet(m.provider as any,network);assert.equal(m.calls.filter(c=>c==='wallet_addEthereumChain').length,1);assert.equal(m.calls.filter(c=>c==='wallet_switchEthereumChain').length,2);});
+test('An add that selects chain does not reprompt',async()=>{const m=mock({code:4902},true);await switchToTestnet(m.provider as any,network);assert.equal(m.calls.filter(c=>c==='wallet_switchEthereumChain').length,1);});
+test('User rejection stops even with nested unknown-chain error',async()=>{const e={code:4001,cause:{code:4902}};const m=mock(e);await assert.rejects(()=>switchToTestnet(m.provider as any,network),x=>x===e);assert(!m.calls.includes('wallet_addEthereumChain'));});
+test('Unrelated errors do not add a network',async()=>{const e={code:-32002,message:'Already pending'};const m=mock(e);await assert.rejects(()=>switchToTestnet(m.provider as any,network),x=>x===e);assert(!m.calls.includes('wallet_addEthereumChain'));});
+test('Already selected chain does not prompt',async()=>{let count=0;await switchToTestnet({request:async()=>{count++;return '0x279f'}} as any,network);assert.equal(count,1);});
+test('Wrong chain after switch blocks sending',async()=>{await assert.rejects(()=>switchToTestnet({request:async({method}:any)=>method==='eth_chainId'?'0x1':null} as any,network),/Please select Monad Testnet/);});
